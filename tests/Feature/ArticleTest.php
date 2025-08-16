@@ -9,9 +9,20 @@ class ArticleTest extends TestCase
     public function test_can_create_article(): void
     {
         $this->actingAsApi();
-        $response = $this->postJson(route('article.create'));
+        $data = [
+            'title' => 'Test Article',
+            'author' => 'Sax',
+            'content' => 'This is test content and I have to be atleast  25 characters long',
+        ];
 
-        $response->assertOk();
+        $response = $this->postJson(route('article.create'), $data);
+
+        $response->assertCreated()
+            ->assertJsonFragment([
+                'title' => 'Test Article',
+                'author' => 'Sax',
+                'content' => 'This is test content and I have to be atleast  25 characters long',
+            ]);
 
     }
 }
