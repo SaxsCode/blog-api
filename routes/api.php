@@ -1,6 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ArticleController;
+use Illuminate\Support\Facades\Route;
 
-Route::post('/article/create', [ArticleController::class, "store"])->name("article.create");
+route::middleware('auth:sanctum')->group(function () {
+    Route::post('/article/create', [ArticleController::class, 'store'])->name('article.create');
+});
