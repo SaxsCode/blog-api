@@ -20,7 +20,15 @@ class ArticleController extends Controller
      */
     public function store(Request $request)
     {
-        return response()->json(["test"]);
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'author' => 'required|string|max:255',
+            'content' => 'required|string|min:25|max:255',
+        ]);
+
+        $article = Article::create($data);
+
+        return response()->json(["article" => $article], 201);
     }
 
     /**
