@@ -13,7 +13,8 @@ class ArticleController extends Controller
     public function index()
     {
         $articles = Article::all();
-        return response()->json(["articles" => $articles]);
+
+        return response()->json(['articles' => $articles]);
     }
 
     /**
@@ -21,15 +22,10 @@ class ArticleController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'content' => 'required|string|min:25|max:255',
-        ]);
-
+        $data = $this->validateFields($request);
         $article = Article::create($data);
 
-        return response()->json(["article" => $article], 201);
+        return response()->json(['article' => $article], 201);
     }
 
     /**
@@ -37,7 +33,7 @@ class ArticleController extends Controller
      */
     public function show(Article $article)
     {
-        return response()->json(["article" => $article]);
+        return response()->json(['article' => $article]);
     }
 
     /**
@@ -45,7 +41,10 @@ class ArticleController extends Controller
      */
     public function update(Request $request, Article $article)
     {
-        //
+        $data = $this->validateFields($request, true);
+        $article->update($data);
+
+        return response()->json(['article' => $article]);
     }
 
     /**
@@ -54,5 +53,18 @@ class ArticleController extends Controller
     public function destroy(Article $article)
     {
         //
+    }
+
+    private function validateFields(Request $request, bool $partial = false): array
+    {
+        $ruleModifier = $partial ? 'sometimes' : 'required';
+
+        $rules = [
+            'title' => [$ruleModifier, 'string', 'max:255'],
+            'author' => [$ruleModifier, 'string', 'max:255'],
+            'content' => [$ruleModifier, 'string', 'min:25', 'max:255'],
+        ];
+
+        return $request->validate($rules);
     }
 }
