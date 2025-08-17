@@ -37,7 +37,7 @@ class ArticleController extends Controller
      */
     public function show(Article $article)
     {
-        //
+        return response()->json(["article" => $article]);
     }
 
     /**

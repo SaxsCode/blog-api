@@ -50,6 +50,17 @@ class ArticleTest extends TestCase
             ->assertJsonFragment($this->validArticleData());
     }
 
+    public function test_can_retrieve_specific_article(): void
+    {
+        $postResponse = $this->postArticle();
+        $articleId = $postResponse->json('article.id');
+
+        $response = $this->getJson(route('articles.show', ['article' => $articleId]));
+
+        $response->assertOk()
+            ->assertJsonFragment($this->validArticleData());
+    }
+
     public function test_can_create_article(): void
     {
         $response = $this->postArticle();
