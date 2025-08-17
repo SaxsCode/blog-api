@@ -9,5 +9,5 @@ route::middleware('auth:sanctum')->group(function () {
         return true;
     })->name('authenticated');
 
-    Route::apiResource('articles', [ArticleController::class]);
+    Route::apiResource('articles', ArticleController::class);
 });
