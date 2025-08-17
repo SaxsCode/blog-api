@@ -52,7 +52,9 @@ class ArticleController extends Controller
      */
     public function destroy(Article $article)
     {
-        //
+        $article->delete();
+
+        return response(null, 204);
     }
 
     private function validateFields(Request $request, bool $partial = false): array
