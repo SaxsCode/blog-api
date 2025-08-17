@@ -2,17 +2,23 @@
 
 namespace Tests\Feature;
 
+use App\Models\Article;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class ArticleTest extends TestCase
 {
-    private const INVALID_ID = 999;
+    private const ARTICLE_STRUCTURE = ['id', 'title', 'author', 'content', 'created_at', 'updated_at'];
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->actingAsApi();
+    }
+
+    private function nonExistingId(): int
+    {
+        return Article::max('id') + 1;
     }
 
     private function validArticleData(): array
@@ -49,7 +55,12 @@ class ArticleTest extends TestCase
         $response = $this->getJson(route('articles.index'));
 
         $response->assertOk()
-            ->assertJsonFragment($this->validArticleData());
+            ->assertJsonFragment($this->validArticleData())
+            ->assertJsonStructure([
+                'articles' => [
+                    '*' => self::ARTICLE_STRUCTURE,
+                ],
+            ]);
     }
 
     public function test_can_retrieve_specific_article(): void
@@ -60,12 +71,15 @@ class ArticleTest extends TestCase
         $response = $this->getJson(route('articles.show', ['article' => $articleId]));
 
         $response->assertOk()
-            ->assertJsonFragment($this->validArticleData());
+            ->assertJsonFragment($this->validArticleData())
+            ->assertJsonStructure([
+                'article' => self::ARTICLE_STRUCTURE,
+            ]);
     }
 
     public function test_returns_404_retrieving_non_existant_article(): void
     {
-        $response = $this->getJson(route('articles.show', ['article' => self::INVALID_ID]));
+        $response = $this->getJson(route('articles.show', ['article' => $this->nonExistingId()]));
 
         $response->assertNotFound();
     }
@@ -75,7 +89,12 @@ class ArticleTest extends TestCase
         $response = $this->postArticle();
 
         $response->assertCreated()
-            ->assertJsonFragment($this->validArticleData());
+            ->assertJsonFragment($this->validArticleData())
+            ->assertJsonStructure([
+                'article' => self::ARTICLE_STRUCTURE,
+            ]);
+
+        $this->assertDatabaseHas('articles', $this->validArticleData());
 
     }
 
@@ -83,7 +102,8 @@ class ArticleTest extends TestCase
     {
         $response = $this->postArticle($this->invalidArticleData());
 
-        $response->assertUnprocessable();
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['title', 'content']);
     }
 
     public function test_can_update_article(): void
@@ -95,25 +115,31 @@ class ArticleTest extends TestCase
         $response = $this->patchJson(route('articles.update', ['article' => $articleId]), $updatedArticle);
 
         $response->assertOk()
-            ->assertJsonFragment($updatedArticle);
+            ->assertJsonFragment($updatedArticle)
+            ->assertJsonStructure([
+                'article' => self::ARTICLE_STRUCTURE,
+            ]);
+
+        $this->assertDatabaseHas('articles', $updatedArticle);
     }
 
     public function test_can_not_update_article_with_invalid_data(): void
     {
         $article = $this->postArticle();
         $articleId = $article->json('article.id');
-        $updatedArticle = ['title' => self::INVALID_ID];
+        $updatedArticle = ['title' => $this->nonExistingId()];
 
         $response = $this->patchJson(route('articles.update', ['article' => $articleId]), $updatedArticle);
 
-        $response->assertUnprocessable();
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['title' ]);
     }
 
     public function test_can_not_update_non_existant_article(): void
     {
         $updatedArticle = ['title' => 'Updated title'];
 
-        $response = $this->patchJson(route('articles.update', ['article' => self::INVALID_ID]), $updatedArticle);
+        $response = $this->patchJson(route('articles.update', ['article' => $this->nonExistingId()]), $updatedArticle);
 
         $response->assertNotFound();
     }
@@ -131,8 +157,7 @@ class ArticleTest extends TestCase
 
     public function test_can_not_delete_non_existant_article(): void
     {
-        $response = $this->deleteJson(route('articles.destroy', ['article' => self::INVALID_ID]));
-
+        $response = $this->deleteJson(route('articles.destroy', ['article' => $this->nonExistingId()]));
         $response->assertNotFound();
     }
 }
