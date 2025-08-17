@@ -117,4 +117,22 @@ class ArticleTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    public function test_can_delete_article(): void
+    {
+        $article = $this->postArticle();
+        $articleId = $article->json('article.id');
+
+        $response = $this->deleteJson(route('articles.destroy', ['article' => $articleId]));
+
+        $response->assertNoContent();
+        $this->assertDatabaseMissing('articles', ['id' => $articleId]);
+    }
+
+    public function test_can_not_delete_non_existant_article(): void
+    {
+        $response = $this->deleteJson(route('articles.destroy', ['article' => self::INVALID_ID]));
+
+        $response->assertNotFound();
+    }
 }
