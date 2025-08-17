@@ -2,70 +2,66 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Http\JsonResponse;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class ArticleTest extends TestCase
 {
-    private $validArticleData = [
-        'title' => 'Test Article',
-        'author' => 'Sax',
-        'content' => 'This is test content and I have to be atleast  25 characters long',
-    ];
-
-    private $invalidArticleData = [
-        'title' => 465,
-        'author' => 'Sax',
-        'content' => 'test',
-    ];
-
     protected function setUp(): void
     {
         parent::setUp();
         $this->actingAsApi();
     }
 
-    private function createArticle(bool $isValidArticle = true): TestResponse
+    private function validArticleData(): array
     {
-        $data = $this->validArticleData;
-        if (! $isValidArticle) {
-            $data = $this->invalidArticleData;
+        return [
+            'title' => 'Test Article',
+            'author' => 'Sax',
+            'content' => 'This is test content and I have to be atleast  25 characters long',
+        ];
+    }
+
+    private function invalidArticleData(): array
+    {
+        return [
+            'title' => 465,
+            'author' => 'Sax',
+            'content' => 'test',
+        ];
+    }
+
+    private function postArticle(?array $articleData = null): TestResponse
+    {
+        if ($articleData === null) {
+            $articleData = $this->validArticleData();
         }
 
-        return $this->postJson(route('articles.store'), $data);
+        return $this->postJson(route('articles.store'), $articleData);
     }
 
     public function test_can_retrieve_articles(): void
     {
-        $this->createArticle();
+        $this->postArticle();
 
         $response = $this->getJson(route('articles.index'));
 
         $response->assertOk()
-            ->assertJsonFragment([
-                'title' => 'Test Article',
-                'author' => 'Sax',
-                'content' => 'This is test content and I have to be atleast  25 characters long',
-            ]);
+            ->assertJsonFragment($this->validArticleData());
     }
 
     public function test_can_create_article(): void
     {
-        $response = $this->createArticle();
+        $response = $this->postArticle();
 
         $response->assertCreated()
-            ->assertJsonFragment([
-                'title' => 'Test Article',
-                'author' => 'Sax',
-                'content' => 'This is test content and I have to be atleast  25 characters long',
-            ]);
+            ->assertJsonFragment($this->validArticleData());
 
     }
 
-    public function test_can_not_create_article_with_invalid_data(): void
+    public function test_article_creation_fails_with_invalid_data(): void
     {
-        $response = $this->createArticle(false);
+        $response = $this->postArticle($this->invalidArticleData());
 
         $response->assertUnprocessable();
     }
